@@ -1,0 +1,2320 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Potholes in Britain</title>
+    <meta name="description" content="Potholes in Britain 2022/23 - map by Round Our Way">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <style>
+
+      body { margin: 0; padding: 0; }
+
+      #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+      .mapboxgl-popup h2 {
+         font: 18px/18px Helvetica, Arial, sans-serif;
+         font-weight: bold;
+         margin: 4px 0 10px;
+      }
+
+      .mapboxgl-popup p {
+         font: 16px/21px Helvetica, Arial, sans-serif;
+         margin: 5px 0 0;
+      }
+
+      h2, h3 {
+        margin: 10px;
+        font-size: 18px;
+      }
+
+      h3 {
+        font-size: 16px;
+      }
+
+      p {
+        margin: 10px;
+      }
+
+      a {
+          color: #CB3F66;
+          text-decoration: none;
+      }
+
+      a:hover {
+        color: #018E8B;
+        text-decoration: none;
+      }
+
+      /**
+      * Create a position for the map
+      * on the page */
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      /**
+      * Set rules for how the map overlays
+      * (information box and legend) will be displayed
+      * on the page. */
+      .map-overlay {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #fff;
+        margin-right: 20px;
+        font-family: Helvetica, Arial, sans-serif;
+        overflow: auto;
+        border-radius: 3px;
+        font-size: 14px;
+      }
+
+      #legend1 {
+        padding: 10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        line-height: 18px;
+        height: 163px;
+        margin-top: 56px;
+        margin-right: 50px;
+        width: 115px;
+        display: none;
+        display: block;
+      }
+
+      .legend-key {
+        display: inline-block;
+        border-radius: 20%;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px; 
+      }
+
+      #buttonbox {
+        display: block;
+        position: absolute;
+        margin-top: 12px;
+        margin-left: 12px;
+        width: 125px;
+        padding: 15px;
+        background-color: #fff;
+      }
+
+      #buttonbox h1 {
+         font: 20px/21px Helvetica, Arial, sans-serif;
+         font-weight: bold;
+         margin: 0 0 10px;
+      }
+
+      #buttonbox p {
+        font: 12px Helvetica, Arial, sans-serif;
+        margin:10px 0 0 0;
+        line-height: 1.3;
+      }
+
+      .btn {
+        background-color: #bbb; 
+        border: none;
+        color: white;
+        padding: 6px 10px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 17px;
+        font-weight: bold;
+        margin: 0;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+
+      .active, .btn:hover {
+        background-color: #8C1A46; 
+      }
+
+      .styled-table {
+          border-collapse: collapse;
+          margin: 0;
+          font-size: 1.1em;
+          line-height: 1.3;
+          font-family: Helvetica, Arial, sans-serif;
+          width: 100%;
+          font-weight: normal;
+      }
+
+      .styled-table thead tr {
+          background-color: #009879;
+          color: #ffffff;
+          text-align: left;
+      }
+
+      .styled-table th,
+      .styled-table td {
+          padding: 5px 4px;
+      }
+
+      .styled-table tbody tr {
+          border-bottom: 1px solid #dddddd;
+      }
+
+      .styled-table tbody tr:nth-of-type(even) {
+          background-color: #f3f3f3;
+      }
+
+      .styled-table tbody tr:first-of-type {
+          border-top: 2px solid #009879;
+      }
+
+      .styled-table tbody tr:last-of-type {
+          border-bottom: 1px solid #009879;
+      }
+
+      @media (max-width: 650px) {
+        .mapboxgl-ctrl-geocoder {
+          display: none;
+        }
+        #legend1 {
+          margin-top:10px;
+        }
+      }
+
+    </style>
+
+    <!-- Load the `mapbox-gl-geocoder` plugin. -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+
+</head>
+<body>
+
+<div id="map"></div>
+
+  <!-- Navigation panel -->
+  <div id="buttonbox">
+    <h1>Potholes in Britain</h1>
+    <button class="btn" id="y2022">2022</button>
+    <button class="btn active" id="y2023">2023</button>
+    <p>Data sourced from FOI requests sent to UK local authorities • 2023 data covers Jan to Nov</p>
+  </div>
+
+  <div class='map-overlay' id='legend1'>Potholes</div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoicm91bmRvdXJ3YXkiLCJhIjoiY2xxZTB6YzE1MGdvNjJqdGs4b3E3OHBwYSJ9.Ynm5J8Z-0-VNeBv8j9PmKA';
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/roundourway/clqe15g2p00bv01qy247r5js0',
+        center: [-3, 54.1],
+        zoom: 5.3
+      });
+
+      // legend values
+      const layers1 = [
+        '0-4,999',
+        '5,000-9,999',
+        '10,000-14,999',
+        '15,000-19,999',
+        '20,000-24,999',
+        '25,000-29,999',
+        '30,000-34,999',
+        '35,000+'
+      ];
+      const colors1 = [
+        '#B0D4BB',
+        '#A9AFA4',
+        '#A59392',
+        '#A07F84',
+        '#9D6A78',
+        '#975168',
+        '#933656',
+        '#8E1A44'
+      ];
+
+      // legend 1
+      const legend1 = document.getElementById('legend1');
+
+      layers1.forEach((layer1, i) => {
+        const color1 = colors1[i];
+        const item1 = document.createElement('div');
+        const key1 = document.createElement('span');
+        key1.className = 'legend-key';
+        key1.style.backgroundColor = color1;
+
+        const value1 = document.createElement('span');
+        value1.innerHTML = `${layer1}`;
+        item1.appendChild(key1);
+        item1.appendChild(value1);
+        legend1.appendChild(item1);
+      });
+
+      // map colours
+      const colorRanges =
+        [
+          {
+              colours: 0,
+              color: '#E1E0D7'
+          },
+          {
+              colours: 5000,
+              color: '#B0D4BB'
+          },
+          {
+              colours: 10000,
+              color: '#A9AFA4'
+          },
+          {
+              colours: 15000,
+              color: '#A59392'
+          },
+          {
+              colours: 20000,
+              color: '#A07F84'
+          },
+          {
+              colours: 25000,
+              color: '#9D6A78'
+          },
+          {
+              colours: 30000,
+              color: '#975168'
+          },
+          {
+              colours: 35000,
+              color: '#933656'
+          },
+          {
+              colours: 70000,
+              color: '#8E1A44'
+          }
+        ]
+
+      const data =
+        [
+ {
+   "placecode": "S12000033",
+   "placename": "Aberdeen City",
+   "council": "Aberdeen City Council",
+   "y2022": 5184,
+   "y2023": 12567,
+   "change": 142.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000034",
+   "placename": "Aberdeenshire",
+   "council": "Aberdeenshire Council",
+   "y2022": 4642,
+   "y2023": 8316,
+   "change": 79.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000041",
+   "placename": "Angus",
+   "council": "Angus Council",
+   "y2022": 752,
+   "y2023": 1653,
+   "change": 120,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000035",
+   "placename": "Argyll and Bute",
+   "council": "Argyll and Bute Council",
+   "y2022": 3113,
+   "y2023": 3357,
+   "change": 7.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000055",
+   "placename": "Bedford",
+   "council": "Bedford Borough Council",
+   "y2022": 1049,
+   "y2023": 1929,
+   "change": 83.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000004",
+   "placename": "Bexley",
+   "council": "Bexley Borough Council",
+   "y2022": 392,
+   "y2023": 1006,
+   "change": 156.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000025",
+   "placename": "Birmingham",
+   "council": "Birmingham City Council",
+   "y2022": 1716,
+   "y2023": 1711,
+   "change": -0.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000008",
+   "placename": "Blackburn with Darwen",
+   "council": "Blackburn with Darwen Borough Council",
+   "y2022": 720,
+   "y2023": 1144,
+   "change": 58.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000009",
+   "placename": "Blackpool",
+   "council": "Blackpool Borough Council",
+   "y2022": 306,
+   "y2023": 498,
+   "change": 62.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000001",
+   "placename": "Bolton",
+   "council": "Bolton Metropolitan Borough Council",
+   "y2022": 6939,
+   "y2023": 5484,
+   "change": -21,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000058",
+   "placename": "Bournemouth, Christchurch and Poole",
+   "council": "Bournemouth, Christchurch and Poole Council",
+   "y2022": 2410,
+   "y2023": 2757,
+   "change": 14.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000032",
+   "placename": "Bradford",
+   "council": "Bradford City Council",
+   "y2022": 1783,
+   "y2023": 2206,
+   "change": 23.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000023",
+   "placename": "Bristol, City of",
+   "council": "Bristol City Council",
+   "y2022": 2719,
+   "y2023": 3352,
+   "change": 23.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000002",
+   "placename": "Bury",
+   "council": "Bury Metropolitan Borough Council",
+   "y2022": 690,
+   "y2023": 1870,
+   "change": 171,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000018",
+   "placename": "Caerphilly",
+   "council": "Caerphilly County Borough Council",
+   "y2022": 488,
+   "y2023": 927,
+   "change": 90,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000015",
+   "placename": "Cardiff",
+   "council": "Cardiff Council",
+   "y2022": 2021,
+   "y2023": 3903,
+   "change": 93.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000010",
+   "placename": "Carmarthenshire",
+   "council": "Carmarthenshire County Council",
+   "y2022": 3593,
+   "y2023": 5034,
+   "change": 40.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000008",
+   "placename": "Ceredigion",
+   "council": "Ceredigion County Council",
+   "y2022": 2251,
+   "y2023": 3172,
+   "change": 40.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000049",
+   "placename": "Cheshire East",
+   "council": "Cheshire East Council",
+   "y2022": 6142,
+   "y2023": 8992,
+   "change": 46.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000050",
+   "placename": "Cheshire West and Chester",
+   "council": "Cheshire West and Chester Council",
+   "y2022": 4947,
+   "y2023": 11998,
+   "change": 142.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000005",
+   "placename": "Clackmannanshire",
+   "council": "Clackmannanshire Council",
+   "y2022": 404,
+   "y2023": 505,
+   "change": 25,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000047",
+   "placename": "County Durham",
+   "council": "Durham County Council",
+   "y2022": 4162,
+   "y2023": 5899,
+   "change": 41.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000026",
+   "placename": "Coventry",
+   "council": "Coventry City Council",
+   "y2022": 1134,
+   "y2023": 2194,
+   "change": 93.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000008",
+   "placename": "Croydon",
+   "council": "Croydon Borough Council",
+   "y2022": 2385,
+   "y2023": 5502,
+   "change": 131,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000015",
+   "placename": "Derby",
+   "council": "Derby City Council",
+   "y2022": 833,
+   "y2023": 1057,
+   "change": 26.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000017",
+   "placename": "Doncaster",
+   "council": "Doncaster Borough Council",
+   "y2022": 1662,
+   "y2023": 1326,
+   "change": -20.2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000059",
+   "placename": "Dorset",
+   "council": "Dorset Council",
+   "y2022": 12191,
+   "y2023": 14644,
+   "change": 20.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000006",
+   "placename": "Dumfries and Galloway",
+   "council": "Dumfries and Galloway Council",
+   "y2022": 16025,
+   "y2023": 15920,
+   "change": -1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000042",
+   "placename": "Dundee City",
+   "council": "Dundee City Council",
+   "y2022": 414,
+   "y2023": 834,
+   "change": 101,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000009",
+   "placename": "Ealing",
+   "council": "Ealing Borough Council",
+   "y2022": 2524,
+   "y2023": 3945,
+   "change": 56.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000008",
+   "placename": "East Ayrshire",
+   "council": "East Ayrshire Council",
+   "y2022": 2213,
+   "y2023": 2386,
+   "change": 7.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000011",
+   "placename": "East Renfrewshire",
+   "council": "East Renfrewshire Council",
+   "y2022": 3963,
+   "y2023": 3510,
+   "change": -11.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000011",
+   "placename": "East Riding of Yorkshire",
+   "council": "East Riding of Yorkshire Council",
+   "y2022": 2040,
+   "y2023": 2864,
+   "change": 40.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000011",
+   "placename": "East Sussex",
+   "council": "East Sussex County Council",
+   "y2022": 17204,
+   "y2023": 30552,
+   "change": 77.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000010",
+   "placename": "Enfield",
+   "council": "Enfield Council",
+   "y2022": 394,
+   "y2023": 1064,
+   "change": 170.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000012",
+   "placename": "Essex",
+   "council": "Essex County Council",
+   "y2022": 11879,
+   "y2023": 19280,
+   "change": 62.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000014",
+   "placename": "Falkirk",
+   "council": "Falkirk Council",
+   "y2022": 1641,
+   "y2023": 3154,
+   "change": 92,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000047",
+   "placename": "Fife",
+   "council": "Fife Council",
+   "y2022": 5958,
+   "y2023": 8271,
+   "change": 39,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000037",
+   "placename": "Gateshead",
+   "council": "Gateshead Metropolitan Borough Council",
+   "y2022": 342,
+   "y2023": 402,
+   "change": 17.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000049",
+   "placename": "Glasgow City",
+   "council": "Glasgow City Council",
+   "y2022": 15517,
+   "y2023": 17898,
+   "change": 15.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000013",
+   "placename": "Gloucestershire",
+   "council": "Gloucestershire County Council",
+   "y2022": 6845,
+   "y2023": 16067,
+   "change": 134.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000011",
+   "placename": "Greenwich",
+   "council": "Greenwich Borough Council",
+   "y2022": 1175,
+   "y2023": 1467,
+   "change": 24.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000002",
+   "placename": "Gwynedd",
+   "council": "Gwynedd Council",
+   "y2022": 1308,
+   "y2023": 1787,
+   "change": 37,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000012",
+   "placename": "Hackney",
+   "council": "Hackney Borough Council",
+   "y2022": 1483,
+   "y2023": 1782,
+   "change": 20.2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000013",
+   "placename": "Hammersmith and Fulham",
+   "council": "Hammersmith and Fulham Borough Council",
+   "y2022": 7,
+   "y2023": 46,
+   "change": 557.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000014",
+   "placename": "Hampshire",
+   "council": "Hampshire County Council",
+   "y2022": 13680,
+   "y2023": 30169,
+   "change": 120.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000014",
+   "placename": "Haringey",
+   "council": "Haringey Borough Council",
+   "y2022": 446,
+   "y2023": 337,
+   "change": -24.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000015",
+   "placename": "Harrow",
+   "council": "Harrow Borough Council",
+   "y2022": 545,
+   "y2023": 1819,
+   "change": 233.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000019",
+   "placename": "Herefordshire, County of",
+   "council": "Herefordshire Council",
+   "y2022": 2549,
+   "y2023": 5628,
+   "change": 120.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000015",
+   "placename": "Hertfordshire",
+   "council": "Hertfordshire County Council",
+   "y2022": 5557,
+   "y2023": 10528,
+   "change": 89.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000017",
+   "placename": "Highland",
+   "council": "Highland Council",
+   "y2022": 2718,
+   "y2023": 2367,
+   "change": -12.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000017",
+   "placename": "Hillingdon",
+   "council": "Hillingdon Borough Council",
+   "y2022": 1346,
+   "y2023": 2295,
+   "change": 70.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000018",
+   "placename": "Hounslow",
+   "council": "Hounslow Borough Council",
+   "y2022": 646,
+   "y2023": 1256,
+   "change": 94.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000018",
+   "placename": "Inverclyde",
+   "council": "Inverclyde Council",
+   "y2022": 1174,
+   "y2023": 1270,
+   "change": 8.2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000046",
+   "placename": "Isle of Wight",
+   "council": "Isle of Wight Council",
+   "y2022": 813,
+   "y2023": 1733,
+   "change": 113.2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000020",
+   "placename": "Kensington and Chelsea",
+   "council": "Royal Borough of Kensington and Chelsea",
+   "y2022": 74,
+   "y2023": 82,
+   "change": 10.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000010",
+   "placename": "Kingston upon Hull, City of",
+   "council": "Hull City Council",
+   "y2022": 6247,
+   "y2023": 5790,
+   "change": -7.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000011",
+   "placename": "Knowsley",
+   "council": "Knowsley Metropolitan Borough Council",
+   "y2022": 290,
+   "y2023": 410,
+   "change": 41.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000022",
+   "placename": "Lambeth",
+   "council": "Lambeth Borough Council",
+   "y2022": 571,
+   "y2023": 754,
+   "change": 32,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000035",
+   "placename": "Leeds",
+   "council": "Leeds City Council",
+   "y2022": 6598,
+   "y2023": 9865,
+   "change": 49.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000016",
+   "placename": "Leicester",
+   "council": "Leicester City Council",
+   "y2022": 719,
+   "y2023": 1974,
+   "change": 174.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000018",
+   "placename": "Leicestershire",
+   "council": "Leicestershire County Council",
+   "y2022": 2825,
+   "y2023": 4943,
+   "change": 75,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000023",
+   "placename": "Lewisham",
+   "council": "Lewisham Borough Council",
+   "y2022": 1741,
+   "y2023": 2582,
+   "change": 48.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000019",
+   "placename": "Lincolnshire",
+   "council": "Lincolnshire County Council",
+   "y2022": 11139,
+   "y2023": 14788,
+   "change": 32.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000012",
+   "placename": "Liverpool",
+   "council": "Liverpool City Council",
+   "y2022": 2643,
+   "y2023": 4411,
+   "change": 66.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000035",
+   "placename": "Medway",
+   "council": "Medway Council",
+   "y2022": 8978,
+   "y2023": 22455,
+   "change": 150.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000024",
+   "placename": "Merton",
+   "council": "Merton Borough Council",
+   "y2022": 1659,
+   "y2023": 2824,
+   "change": 70.2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000019",
+   "placename": "Midlothian",
+   "council": "Midlothian Council",
+   "y2022": 1906,
+   "y2023": 2087,
+   "change": 9.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000020",
+   "placename": "Moray",
+   "council": "Moray Council",
+   "y2022": 571,
+   "y2023": 713,
+   "change": 24.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000012",
+   "placename": "Neath Port Talbot",
+   "council": "Neath Port Talbot County Borough Council",
+   "y2022": 682,
+   "y2023": 1376,
+   "change": 101.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000021",
+   "placename": "Newcastle upon Tyne",
+   "council": "Newcastle upon Tyne City Council",
+   "y2022": 16759,
+   "y2023": 9703,
+   "change": -42.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000022",
+   "placename": "Newport",
+   "council": "Newport City Council",
+   "y2022": 574,
+   "y2023": 1610,
+   "change": 180.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000020",
+   "placename": "Norfolk",
+   "council": "Norfolk County Council",
+   "y2022": 9181,
+   "y2023": 7478,
+   "change": -18.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000021",
+   "placename": "North Ayrshire",
+   "council": "North Ayrshire Council",
+   "y2022": 1411,
+   "y2023": 2097,
+   "change": 48.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000012",
+   "placename": "North East Lincolnshire",
+   "council": "North East Lincolnshire Council",
+   "y2022": 790,
+   "y2023": 801,
+   "change": 1.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000050",
+   "placename": "North Lanarkshire",
+   "council": "North Lanarkshire Council",
+   "y2022": 1508,
+   "y2023": 3742,
+   "change": 148.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000023",
+   "placename": "North Yorkshire",
+   "council": "North Yorkshire Council",
+   "y2022": 3076,
+   "y2023": 4095,
+   "change": 33.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000057",
+   "placename": "Northumberland",
+   "council": "Northumberland County Council",
+   "y2022": 39843,
+   "y2023": 38368,
+   "change": -3.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000024",
+   "placename": "Nottinghamshire",
+   "council": "Nottinghamshire County Council",
+   "y2022": 10928,
+   "y2023": 17815,
+   "change": 63,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000004",
+   "placename": "Oldham",
+   "council": "Oldham Metropolitan Borough Council",
+   "y2022": 1406,
+   "y2023": 1340,
+   "change": -4.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000023",
+   "placename": "Orkney Islands",
+   "council": "Orkney Islands Council",
+   "y2022": 707,
+   "y2023": 1309,
+   "change": 85.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000025",
+   "placename": "Oxfordshire",
+   "council": "Oxfordshire County Council",
+   "y2022": 21569,
+   "y2023": 32140,
+   "change": 49,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000048",
+   "placename": "Perth and Kinross",
+   "council": "Perth and Kinross Council",
+   "y2022": 2765,
+   "y2023": 1822,
+   "change": -34.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000031",
+   "placename": "Peterborough",
+   "council": "Peterborough City Council",
+   "y2022": 659,
+   "y2023": 1079,
+   "change": 63.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000026",
+   "placename": "Plymouth",
+   "council": "Plymouth City Council",
+   "y2022": 2204,
+   "y2023": 3053,
+   "change": 38.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000044",
+   "placename": "Portsmouth",
+   "council": "Portsmouth City Council",
+   "y2022": 130,
+   "y2023": 382,
+   "change": 193.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000023",
+   "placename": "Powys",
+   "council": "Powys County Council",
+   "y2022": 211,
+   "y2023": 362,
+   "change": 71.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000026",
+   "placename": "Redbridge",
+   "council": "Redbridge Borough Council",
+   "y2022": 1015,
+   "y2023": 2254,
+   "change": 122.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000038",
+   "placename": "Renfrewshire",
+   "council": "Renfrewshire Council",
+   "y2022": 1080,
+   "y2023": 1110,
+   "change": 2.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000005",
+   "placename": "Rochdale",
+   "council": "Rochdale Metropolitan Borough Council",
+   "y2022": 811,
+   "y2023": 1406,
+   "change": 73,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000018",
+   "placename": "Rotherham",
+   "council": "Rotherham Metropolitan Borough Council",
+   "y2022": 1425,
+   "y2023": 1647,
+   "change": 15.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000017",
+   "placename": "Rutland",
+   "council": "Rutland County Council",
+   "y2022": 1420,
+   "y2023": 692,
+   "change": -51.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000028",
+   "placename": "Sandwell",
+   "council": "Sandwell Metropolitan Borough Council",
+   "y2022": 1616,
+   "y2023": 1413,
+   "change": -12.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000014",
+   "placename": "Sefton",
+   "council": "Sefton Borough Council",
+   "y2022": 350,
+   "y2023": 281,
+   "change": -19.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000019",
+   "placename": "Sheffield",
+   "council": "Sheffield City Council",
+   "y2022": 4611,
+   "y2023": 6719,
+   "change": 45.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000051",
+   "placename": "Shropshire",
+   "council": "Shropshire Council",
+   "y2022": 3789,
+   "y2023": 4320,
+   "change": 14,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000029",
+   "placename": "Solihull",
+   "council": "Solihull Metropolitan Borough Council",
+   "y2022": 1492,
+   "y2023": 2926,
+   "change": 96,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000027",
+   "placename": "Somerset",
+   "council": "Somerset Council",
+   "y2022": 18157,
+   "y2023": 24709,
+   "change": 36.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000029",
+   "placename": "South Lanarkshire",
+   "council": "South Lanarkshire Council",
+   "y2022": 2212,
+   "y2023": 3646,
+   "change": 64.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000045",
+   "placename": "Southampton",
+   "council": "Southampton City Council",
+   "y2022": 3373,
+   "y2023": 3256,
+   "change": -3.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000033",
+   "placename": "Southend-on-Sea",
+   "council": "Southend-on-Sea City Council",
+   "y2022": 605,
+   "y2023": 1186,
+   "change": 96,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000028",
+   "placename": "Southwark",
+   "council": "Southwark Borough Council",
+   "y2022": 148,
+   "y2023": 119,
+   "change": -19.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000030",
+   "placename": "Stirling",
+   "council": "Stirling Council",
+   "y2022": 870,
+   "y2023": 1522,
+   "change": 74.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000007",
+   "placename": "Stockport",
+   "council": "Stockport Metropolitan Borough Council",
+   "y2022": 1079,
+   "y2023": 1306,
+   "change": 21,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000029",
+   "placename": "Suffolk",
+   "council": "Suffolk County Council",
+   "y2022": 5444,
+   "y2023": 12545,
+   "change": 130.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000024",
+   "placename": "Sunderland",
+   "council": "Sunderland City Council",
+   "y2022": 602,
+   "y2023": 436,
+   "change": -27.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000030",
+   "placename": "Surrey",
+   "council": "Surrey County Council",
+   "y2022": 50548,
+   "y2023": 68074,
+   "change": 35,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000029",
+   "placename": "Sutton",
+   "council": "Sutton Borough Council",
+   "y2022": 601,
+   "y2023": 696,
+   "change": 15.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000008",
+   "placename": "Tameside",
+   "council": "Tameside Metropolitan Borough Council",
+   "y2022": 7755,
+   "y2023": 7600,
+   "change": -2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000020",
+   "placename": "Telford and Wrekin",
+   "council": "Telford and Wrekin Council",
+   "y2022": 832,
+   "y2023": 1489,
+   "change": 79,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000034",
+   "placename": "Thurrock",
+   "council": "Thurrock Borough Council",
+   "y2022": 2643,
+   "y2023": 3605,
+   "change": 36.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000027",
+   "placename": "Torbay",
+   "council": "Torbay Borough Council",
+   "y2022": 1874,
+   "y2023": 1127,
+   "change": -39.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "W06000020",
+   "placename": "Torfaen",
+   "council": "Torfaen County Borough Council",
+   "y2022": 519,
+   "y2023": 977,
+   "change": 88.2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000036",
+   "placename": "Wakefield",
+   "council": "Wakefield City Council",
+   "y2022": 9510,
+   "y2023": 13777,
+   "change": 44.9,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000030",
+   "placename": "Walsall",
+   "council": "Walsall Metropolitan Borough Council",
+   "y2022": 430,
+   "y2023": 450,
+   "change": 4.7,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000031",
+   "placename": "Waltham Forest",
+   "council": "Waltham Forest Borough Council",
+   "y2022": 905,
+   "y2023": 1686,
+   "change": 86.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000032",
+   "placename": "Wandsworth",
+   "council": "Wandsworth Borough Council",
+   "y2022": 728,
+   "y2023": 695,
+   "change": -4.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000037",
+   "placename": "West Berkshire",
+   "council": "West Berkshire Council",
+   "y2022": 1523,
+   "y2023": 3534,
+   "change": 132,
+   "stats": "Y"
+ },
+ {
+   "placecode": "S12000040",
+   "placename": "West Lothian",
+   "council": "West Lothian Council",
+   "y2022": 1353,
+   "y2023": 1969,
+   "change": 45.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000062",
+   "placename": "West Northamptonshire",
+   "council": "West Northamptonshire Council",
+   "y2022": 1638,
+   "y2023": 9674,
+   "change": 490.6,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000032",
+   "placename": "West Sussex",
+   "council": "West Sussex County Council",
+   "y2022": 7152,
+   "y2023": 23392,
+   "change": 227.1,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000033",
+   "placename": "Westminster",
+   "council": "Westminster City Council",
+   "y2022": 480,
+   "y2023": 461,
+   "change": -4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000010",
+   "placename": "Wigan",
+   "council": "Wigan Metropolitan Borough Council",
+   "y2022": 1182,
+   "y2023": 913,
+   "change": -22.8,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000054",
+   "placename": "Wiltshire",
+   "council": "Wiltshire Council",
+   "y2022": 5737,
+   "y2023": 17697,
+   "change": 208.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000040",
+   "placename": "Windsor and Maidenhead",
+   "council": "Royal Borough of Windsor and Maidenhead",
+   "y2022": 888,
+   "y2023": 1903,
+   "change": 114.3,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E06000041",
+   "placename": "Wokingham",
+   "council": "Wokingham Borough Council",
+   "y2022": 1125,
+   "y2023": 2308,
+   "change": 105.2,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E08000031",
+   "placename": "Wolverhampton",
+   "council": "Wolverhampton City Council",
+   "y2022": 827,
+   "y2023": 2162,
+   "change": 161.4,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E10000034",
+   "placename": "Worcestershire",
+   "council": "Worcestershire County Council",
+   "y2022": 2935,
+   "y2023": 4035,
+   "change": 37.5,
+   "stats": "Y"
+ },
+ {
+   "placecode": "E09000002",
+   "placename": "Barking and Dagenham",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000003",
+   "placename": "Barnet",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000016",
+   "placename": "Barnsley",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000022",
+   "placename": "Bath and North East Somerset",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000019",
+   "placename": "Blaenau Gwent",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000036",
+   "placename": "Bracknell Forest",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000005",
+   "placename": "Brent",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000013",
+   "placename": "Bridgend",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000043",
+   "placename": "Brighton and Hove",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000006",
+   "placename": "Bromley",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000060",
+   "placename": "Buckinghamshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000033",
+   "placename": "Calderdale",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000003",
+   "placename": "Cambridgeshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000007",
+   "placename": "Camden",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000056",
+   "placename": "Central Bedfordshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000036",
+   "placename": "City of Edinburgh",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000001",
+   "placename": "City of London",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000003",
+   "placename": "Conwy",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000052",
+   "placename": "Cornwall",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000006",
+   "placename": "Cumbria",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000005",
+   "placename": "Darlington",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000004",
+   "placename": "Denbighshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000007",
+   "placename": "Derbyshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000008",
+   "placename": "Devon",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000027",
+   "placename": "Dudley",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000045",
+   "placename": "East Dunbartonshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000010",
+   "placename": "East Lothian",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000005",
+   "placename": "Flintshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000006",
+   "placename": "Halton",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000001",
+   "placename": "Hartlepool",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000016",
+   "placename": "Havering",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000001",
+   "placename": "Isle of Anglesey",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000053",
+   "placename": "Isles of Scilly",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000019",
+   "placename": "Islington",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000016",
+   "placename": "Kent",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000021",
+   "placename": "Kingston upon Thames",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000034",
+   "placename": "Kirklees",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000017",
+   "placename": "Lancashire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000032",
+   "placename": "Luton",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000003",
+   "placename": "Manchester",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000024",
+   "placename": "Merthyr Tydfil",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000002",
+   "placename": "Middlesbrough",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000042",
+   "placename": "Milton Keynes",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000021",
+   "placename": "Monmouthshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000013",
+   "placename": "Na h-Eileanan Siar",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000025",
+   "placename": "Newham",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000013",
+   "placename": "North Lincolnshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000061",
+   "placename": "North Northamptonshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000024",
+   "placename": "North Somerset",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000022",
+   "placename": "North Tyneside",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000018",
+   "placename": "Nottingham",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000009",
+   "placename": "Pembrokeshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000038",
+   "placename": "Reading",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000003",
+   "placename": "Redcar and Cleveland",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000016",
+   "placename": "Rhondda Cynon Taf",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000027",
+   "placename": "Richmond upon Thames",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000006",
+   "placename": "Salford",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000026",
+   "placename": "Scottish Borders",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000027",
+   "placename": "Shetland Islands",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000039",
+   "placename": "Slough",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000028",
+   "placename": "South Ayrshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000025",
+   "placename": "South Gloucestershire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000023",
+   "placename": "South Tyneside",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000013",
+   "placename": "St. Helens",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000028",
+   "placename": "Staffordshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000004",
+   "placename": "Stockton-on-Tees",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000021",
+   "placename": "Stoke-on-Trent",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000011",
+   "placename": "Swansea",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000030",
+   "placename": "Swindon",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E09000030",
+   "placename": "Tower Hamlets",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000009",
+   "placename": "Trafford",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000014",
+   "placename": "Vale of Glamorgan",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000007",
+   "placename": "Warrington",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E10000031",
+   "placename": "Warwickshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "S12000039",
+   "placename": "West Dunbartonshire",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E08000015",
+   "placename": "Wirral",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "W06000006",
+   "placename": "Wrexham",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ },
+ {
+   "placecode": "E06000014",
+   "placename": "York",
+   "council": "",
+   "y2022": 0,
+   "y2023": 0,
+   "change": 0,
+   "stats": "N"
+ }
+
+        ];
+
+      // Add the geocoder control to the map.
+      map.addControl(
+          new MapboxGeocoder({
+              accessToken: mapboxgl.accessToken,
+              countries: 'gb',
+              flyTo: {
+                  bearing: 0,
+                  speed: 2.5,
+                  curve: 1,
+                  zoom: 10,
+                  easing: function (t) {
+                      return t;
+                  }
+              },
+              mapboxgl: mapboxgl,
+          })
+      );
+
+      map.on('load', () => {
+
+        // Add source for region polygons using custom tileset
+        map.addSource('ukregions', {
+            type: 'vector',
+            url: 'mapbox://cliffordsinger.55bbamie'
+        });
+
+        // Build a GL match expression that defines the color for every vector tile feature
+
+        // y2022
+        const matchExpression1 = ['match', ['get', 'CTYUA22CD']];
+        for (const row of data) {
+            const colorRange = colorRanges.find(range => row['y2022'] <= range.colours);
+            matchExpression1.push(row['placecode'], colorRange.color);
+        }
+        // Last value is the default, used where there is no data
+        matchExpression1.push('rgba(0, 0, 0, 0)');
+
+        // y2023
+        const matchExpression2 = ['match', ['get', 'CTYUA22CD']];
+        for (const row of data) {
+            const colorRange = colorRanges.find(range => row['y2023'] <= range.colours);
+            matchExpression2.push(row['placecode'], colorRange.color);
+        }
+        // Last value is the default, used where there is no data
+        matchExpression2.push('rgba(0, 0, 0, 0)');
+
+        //view-2022
+        map.addLayer(
+          {
+              'id': 'layer-2022',
+              'type': 'fill',
+              'source': 'ukregions',
+              'source-layer': 'Counties_and_Unitary_Authorit-c5ht17',
+              'layout': {
+                  'visibility': 'none'
+              },
+              'paint': {
+                  'fill-color': matchExpression1,
+                  'fill-opacity': 1
+              },
+          },
+          'LA borders'
+        );
+
+        //view-2023
+        map.addLayer(
+          {
+              'id': 'layer-2023',
+              'type': 'fill',
+              'source': 'ukregions',
+              'source-layer': 'Counties_and_Unitary_Authorit-c5ht17',
+              'layout': {
+                  'visibility': 'visible'
+              },
+              'paint': {
+                  'fill-color': matchExpression2,
+                  'fill-opacity': 1
+              },
+          },
+          'LA borders'
+        );
+
+        // Transparent layer for hover actions
+        map.addLayer(
+          {
+              'id': 'regions-all',
+              'type': 'fill',
+              'source': 'ukregions',
+              'source-layer': 'Counties_and_Unitary_Authorit-c5ht17',
+              'layout': {
+                  'visibility': 'visible'
+              },
+              'paint': {
+                  'fill-opacity': 0
+              },
+          },
+          'LA borders'
+        );
+
+      });
+
+      // When a click event occurs on a feature in the regions layer, open a popup
+      map.on('click', 'regions-all', (e) => {
+        const region = data.find(d => d.placecode === e.features[0].properties.CTYUA22CD);
+        if (region) {
+          if (region.stats=='Y') {
+            new mapboxgl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML("<h2>"+region.council+"</h2><table class='styled-table'><tbody><tr><td><strong>2022</strong></td><td>"+region.y2022.toLocaleString()+"</td></tr><tr><td><strong>2023</strong></td><td>"+region.y2023.toLocaleString()+"</td></tr><tr><td><strong>Change</strong></td><td>"+region.change.toLocaleString()+"%</td></tr></tbody></table>")
+              .addTo(map);
+            }
+          else {
+            new mapboxgl.Popup()
+              .setLngLat(e.lngLat)
+              .setHTML("<h2>"+region.placename+"</h2><table class='styled-table'><tbody><tr><td><strong>Data not available</strong></td></tr><tr><td>This council did not respond to our request or provided data in a format not comparable with other areas.</td></tr></tbody></table>")
+              .addTo(map);
+            }
+          }
+      });
+
+      // Change the cursor to a pointer when
+      // the mouse is over the regions layer.
+      map.on('mouseenter', 'regions-all', () => {
+          map.getCanvas().style.cursor = 'pointer';
+      });
+
+      // Change the cursor back to a pointer
+      // when it leaves the regions layer.
+      map.on('mouseleave', 'regions-all', () => {
+          map.getCanvas().style.cursor = '';
+      });
+
+     // Make 2022 visible
+      document.querySelector('#y2022').addEventListener('click', () => {
+          map.setLayoutProperty('layer-2022', 'visibility', 'visible')
+          map.setLayoutProperty('layer-2023', 'visibility', 'none') 
+      }
+      )
+
+      // Make 2023 visible
+      document.querySelector('#y2023').addEventListener('click', () => {
+          map.setLayoutProperty('layer-2022', 'visibility', 'none') 
+          map.setLayoutProperty('layer-2023', 'visibility', 'visible') 
+      }
+      )   
+
+      // Highlight active button
+
+      // Get the container element
+      var btnContainer = document.getElementById("buttonbox");
+
+      // Get all buttons with class="btn" inside the container
+      var btns = btnContainer.getElementsByClassName("btn");
+
+      // Loop through the buttons and add the active class to the current/clicked button
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener("click", function() {
+          var current = document.getElementsByClassName("active");
+          current[0].className = current[0].className.replace(" active", "");
+          this.className += " active";
+        });
+      }
+
+      // Add zoom and rotation controls to the map.
+      map.addControl(new mapboxgl.NavigationControl());
+
+  </script>
+
+</body>
+</html>
